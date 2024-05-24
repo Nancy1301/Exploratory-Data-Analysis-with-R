@@ -1,0 +1,490 @@
+---
+title: "ML- Assignment 1"
+output: html_notebook
+---
+
+Problem Statement 1: Exploring Realtor dataset
+This dataset is from Kaggle and contains both categorical/discrete (nominal and ordinal) and numeric (continuous) variables scraped from www.realtor.com real estate website. The data has over 900K observations (houses) and 12 columns (various attributes of houses). The goal is to explore the price variable and find association between house attributes and its price.
+
+1. (1pt) Explore the overall structure of the dataset using “str” and “summary” functions.
+
+```{r}
+# Let's read the data from the data set
+realtor = read.csv("/Users/nancy/Downloads/realtor-1.csv")
+realtor
+```
+```{r}
+# Exploring the overall structure using str and summary functions as per the ques requirement:
+str(realtor)
+summary(realtor)
+```
+
+# According to the above summary, my personal deductions:
+# 1. The total records are 923159.
+# 2. These columns: price, bed, bath, acre_lot, zip_code, house_size have some missing values.
+# 3. The minimum price for the house is 0, and the maximum price is 875,000,000.
+
+
+2. (1.5pt) Specify the type of each variable as follows:
+• Specify whether the variable is categorical(qualitative) or numeric(continuous)?
+• For qualitative variables, specify whether it is nominal or ordinal.
+• For numeric variables, specify whether it is discrete or continuous?
+• For discrete numeric variables specify whether it has interval scale (i.e., the difference between
+two values is meaningful) or not?
+
+```{r}
+# We can deduce the type of variables with the str() function used above too, but we can also use the "class" function to specify if the variable is categorical or numerical.
+class(realtor$status)
+class(realtor$price)
+class(realtor$bed)
+class(realtor$bath)
+class(realtor$acre_lot)
+class(realtor$full_address)
+class(realtor$street)
+class(realtor$city)
+class(realtor$state)
+class(realtor$zip_code)
+class(realtor$house_size)
+class(realtor$sold_date)
+```
+# So,We have overall 6 categorical variables:- status, full_address, street, city, state and sole_date. 
+# And 6 numeric variables:- price, bed, bath, acre_lot, zip_code and house_size.
+
+```{r}
+# To specify, if its nominal or ordinal in the qualitative variables.
+is.ordered(realtor$status)
+is.ordered(realtor$full_address)
+is.ordered(realtor$street)
+is.ordered(realtor$city)
+is.ordered(realtor$state)
+is.ordered(realtor$sole_date)
+```
+# Therefore, we have all the qualitative variables as nominal because there is no order relevance in them.
+
+
+```{r}
+# To understand if the numeric values are discrete or continuous, we can use the histogram plotting concept to visually reveal the distribution of values. Discrete variables might show distinct bars, while continuous variables may exhibit a smoother distribution.
+
+hist(realtor$price, main = "Histogram")
+hist(realtor$bed, main = "Histogram")
+hist(realtor$bath, main = "Histogram")
+hist(realtor$acre_lot, main = "Histogram")
+hist(realtor$zip_code, main = "Histogram")
+hist(realtor$house_size, main = "Histogram")
+```
+# According to these plots, The variables that seem continuous are: Price, acre_lot, house_size
+# The discrete variables are: bed, bath, zip_code, 
+
+```{r}
+# We are trying a method - equidistant intervals, For an interval scale, the differences between consecutive values should be approximately equal and if not then there is not interval scale between them
+
+# For bed variable:
+unique_values <- unique(realtor$bed)
+bed_diff <- diff(unique_values)
+print(bed_diff)
+
+if (all(bed_diff == bed_diff[1])) {
+  print("Interval scale.")
+} else {
+  print("No interval scale")
+}
+
+# For bath variable:
+unique_values <- unique(realtor$bath)
+bath_diff <- diff(unique_values)
+print(bath_diff)
+
+if (all(bath_diff == bath_diff[1])) {
+  print("Interval scale.")
+} else {
+  print("No interval scale")
+}
+
+# For zip_code variable:
+unique_values <- unique(realtor$zip_code)
+zip_diff <- diff(unique_values)
+print(zip_diff)
+
+if (all(zip_diff == zip_diff[1])) {
+  print("Interval scale.")
+} else {
+  print("No interval scale")
+}
+
+```
+
+# According to my analysis, no discrete variables have any interval scale between them.
+
+
+3. (1pt) are there any duplicate observations in the data? If so, remove them. You can use “duplicated” or
+“unique” functions to answer this question. See an example here.
+
+```{r}
+# Using the duplicated() function
+realtor <- realtor[!duplicated(realtor), ]
+print(realtor)
+text <- "The number of duplicate rows are: "
+print(paste(text,nrow(duplicate_rows)))
+```
+
+# We have around 80,937 duplicacies, which we removed and got 1,13,789 entries.
+
+
+4. (0.5pt) Does any of the variables have missing values? Which ones?
+```{r}
+summary(realtor)
+```
+
+# According to the summary function, we saw that the columns: price, bed, bath, acre_lot, zip_code, house_size have some missing values.
+
+5. (0.5pt) Remove all houses with price less than or equal to 50K
+```{r}
+realtor <- realtor[realtor$price > 50000, ]
+print(realtor)
+```
+
+6. (1pt) The price variable appears to have some extreme values. Remove the outliers in the “price” variable
+using the IQR method. IQR and quantile functions throw error if you have NAs in your variable. Use
+na.rm=TRUE option inside IQR and quantile methods to ignore the missing price values.
+```{r}
+# Let's calculate the IQR through the formula. As price has missing values, we'll use na.rm=TRUE
+iqr <- IQR(realtor$price, na.rm = TRUE)
+q1 <- quantile(realtor$price, 0.25, na.rm = TRUE) - 1.5 * iqr
+q3 <- quantile(realtor$price, 0.75, na.rm = TRUE) + 1.5 * iqr
+print(iqr)
+realtor <- realtor[!(realtor$price < q1 | realtor$price > q3), ]
+print(realtor)
+
+```
+# Now we are left with 98,804 values in total in our dataframe.
+
+
+7. (0.5 pt) Draw a histogram and boxplot of the price. What can you say about the shape of price
+variable? Is the price variable positively skewed, symmetric, or negatively skewed?
+
+```{r}
+hist(realtor$price, main = "The histogram for the price variable", xlab = "Price", ylab = "Frequency")
+```
+# This is a right skewed graph
+
+```{r}
+# The boxplot for this is:-
+boxplot(realtor$price, main = "The boxplot for the price variable", ylab = "Price")
+```
+
+8. (1pt) what percentage of the observations are missing for the price variable?
+
+```{r}
+missing_observation <- mean(is.na(realtor$price)) * 100
+print(missing_observation)
+```
+
+9. (0.5pt) Use as.Date method to convert the sold_date variable from character string to date/time type.
+Then from this date/time object create two new attributes (sold_year) and (sold_month) to store the year and
+month that the house was sold (see an example here: https://statisticsglobe.com/extract-month-from-datein-r )
+
+```{r}
+# Let's take the date format as Year-Month-date
+realtor$sold_date <- as.Date(realtor$sold_date, format = "%Y-%m-%d")
+print(realtor)
+```
+# Here, we can see we have around 42823 missing values in sold_date and the data has been converted into date/time type
+```{r}
+# Using the format function to extract the year and month from the sold_date attribute and created two new attributes to store it in the numeric form
+realtor$sold_year <- as.numeric(format(realtor$sold_date, "%Y"))
+realtor$sold_month <- as.numeric(format(realtor$sold_date, "%m"))
+print(realtor)
+```
+
+
+10. (0.5 pt) convert the “state” attribute to factor then take a summary to see how many observations are
+there for each state. Remove states with only one observation from the data.
+```{r}
+realtor$state <- factor(realtor$state)
+print(realtor)
+summary(realtor$state)
+```
+# For every state, we have a few observations, but there are some states like - West Virginia and Wyoming having only 1 observation so we'll remove those.
+```{r}
+# To check the number of observation for the West Virginia State
+value <- realtor[realtor$state == "West Virginia", ]
+print(value)
+```
+# Let's delete this row 
+```{r}
+realtor <- realtor[realtor$state != "West Virginia", ]
+realtor <- realtor[realtor$state != "Wyoming", ]
+print(realtor)
+```
+
+
+11. (1pt) Is there a statistically significant difference between the average house price for different states?
+Use appropriate plot and statistic test to answer this question.
+
+# To understand the significance difference between the average house prices for different states, we use ANOVA Test
+```{r}
+anova_res <- aov(realtor$price ~ realtor$state, data = realtor)
+summary(anova_res)
+```
+# Taking our Null hypothesis to be that there is no significant difference in the average house prices among different states. Accoording to our anova test results, where the p-value < 0.05 (chosen significance level), we'll reject the null hypothesis indicating that there is a significant difference in the mean house prices among the states.
+
+12.(1pt) What is the correlation between house_price and the variables sold_year, house_size, bed, and
+bath? Note: The “cor” function returns error when NAs are present in the variables. Set
+use="pairwise.complete.obs" inside the “cor” function to ignore NAs when computing correlation
+coefficient between a pair of variables
+
+# 
+```{r}
+correlation <- cor(realtor[, c("price", "sold_year", "house_size", "bed", "bath")],use="pairwise.complete.obs" )
+print(correlation)
+
+```
+# According to this matrix, we can see that:
+# 1. Price has a strong positive correlation with bath and bed.
+# 2. Sold_year has a weak correlation with Price
+
+Problem2 — Exploring Heart Disease Dataset
+In this problem, you are going to explore the heartz disease dataset from UCI. This dataset contains 76
+attributes but only 14 of them are relevant and used in publications. These 14 attributes are already processed
+and extracted from the dataset. Click on Data Folder and download the four processed datasets:
+processed.cleveland.data, processed.hungarian.data, processed.switzerland.data, processed.va.data.
+
+1. (0.5pt) Open these files and examine the data in them. Note that the files do not have a header and the
+missing values are marked by “?” character. Each file contains the 14 attributes described here. Load each
+file to a dataframe ( remember to set na.string=”?” so that “?” is recognized as missing not a data value).
+
+# Loading all the four datasets
+```{r}
+cleveland = read.csv("/Users/nancy/Downloads/processed.cleveland.data", na.strings = "?", header = FALSE )
+cleveland
+```
+
+
+```{r}
+hungarian = read.csv("/Users/nancy/Downloads/processed.hungarian.data",na.strings = "?", header = FALSE )
+hungarian
+```
+
+
+```{r}
+switzerland = read.csv("/Users/nancy/Downloads/processed.switzerland.data", na.strings = "?", header = FALSE)
+switzerland
+```
+
+
+```{r}
+va = read.csv("/Users/nancy/Downloads/processed.va.data",na.strings = "?", header = FALSE)
+va
+```
+2. (0.5 pt) Use rbind function to combine the four data frames into one dataframe and manually set the
+column names using colnames function. The name of each column/attribute is described here.
+
+```{r}
+# Let's first combine these four data frames into one
+heart_disease <- rbind(cleveland, hungarian, switzerland, va)
+# Now, manually setting the 14 columns according to the document provided:
+colnames(heart_disease) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg", "thalach", "exang", "oldpeak", "slope", "ca", "thal", "num")
+print(heart_disease) 
+```
+
+3. (0.5pt) Explore the overall structure of the dataset. What percentage of rows have missing values in one
+or more attributes?
+
+```{r}
+# Exploring the overall structure of the data set using summary function
+summary(heart_disease)
+str(heart_disease)
+```
+# We can see that except for these columns: age,sex,cp,num all have some missing values in them. Also, we have around 920 total entries.
+
+```{r}
+# Finding number of rows having missing values in one or more attributes are:
+missing_rows <- sum(rowSums(is.na(heart_disease)) > 0)
+print(missing_rows)
+```
+# Therefore, we have a total of around 621 missing rows values in one or more attributes.
+```{r}
+# The % would be:
+missing_rows_perc <- (missing_rows/920) * 100
+print(missing_rows_perc)
+```
+
+13. (2pt) Read the data description carefully. Specify the type of each variable as follows:
+• Specify whether the variable is categorical(qualitative) or numeric(continuous)?
+• For qualitative variables, specify whether it is nominal or ordinal.
+• For numeric variables, specify whether it is discrete or continuous?
+• For discrete numeric variables specify
+
+So, After going through the document, the observations made are:
+1. The variables: 
+  1. sex
+  2. cp
+  3. fbs which is fasting blood sugar it can be greater than 120 or less hence creating two classes
+  4. restcg
+  5. exang 
+  6. slope
+  7. thal
+Overall we have 7 attributes being categorical and the other 7 being numerical.
+
+Talking about the qualitative variables being nominal or ordinal:
+So, after going through the description of the attributes
+Nominal Variables:
+1. sex
+2. cp, as the four types includes Value 1: typical angina, Value 2: atypical angina, Value 3: non-anginal pain, Value 4: asymptomatic. There is no particular order for this kind
+3. fbs having two types of values; greater than 120 or less
+4. exang
+
+Ordinal Variables:
+1. restcg, according to the three types there is a particular order being shown 
+2. slope
+3. thal: having a number to specify an order
+
+Talking about the numeric values being discrete or continuous:
+So, after going through the description of the attributes
+Discrete Variables:
+1. age
+2. ca
+3. num, as mentioned in our description it seems categorical having two kinds of values in it
+
+Continuous Variables:
+1. trestbps
+2. chol
+3. thalach
+4. oldpeak
+```{r}
+print(heart_disease)
+```
+
+4. (1pt) Convert all categorical variables to “factor” using factor function ( set the “labels” option to
+give meaningful names/labels to each level)
+```{r}
+# using the factor function:
+unique(heart_disease$restcg)
+heart_disease$sex <- factor(heart_disease$sex, labels = c("F", "M"))
+heart_disease$cp <- factor(heart_disease$cp, labels = c("Typical Angina", "Atypical Angina", "Non-anginal Pain", "Asymptomatic"))
+heart_disease$fbs <- factor(heart_disease$fbs, labels = c("False", "True"))
+heart_disease$exang <- factor(heart_disease$exang, labels = c("No", "Yes"))
+heart_disease$slope <- factor(heart_disease$slope, labels = c("Upsloping", "Flat", "Downsloping"))
+heart_disease$thal <- factor(heart_disease$thal, labels = c("Normal", "Fixed Defect", "Reversable Defect"))
+print(heart_disease)
+```
+5. (0.5 pt) What is the median and mode of the age attribute.
+```{r}
+mode_age <- max(heart_disease$age)
+median_age <- median(heart_disease$age)
+print(paste("The mode is", mode_age))
+print(paste("The median is", median_age))
+```
+
+6. (0.5 pt) Use “ifelse” and “factor” functions to create a new factor variable (call it “diagnosis”) which
+takes the value “No” if column 14 has the value zero and “Yes” otherwise. Replace column 14 of your
+dataframe with this new variable.
+
+```{r}
+# column 14 is num
+heart_disease$diagnosis <- factor(ifelse(heart_disease$num == 0, "No", "Yes"))
+print(heart_disease)
+
+```
+```{r}
+# Replacing this column with new diagnosis column
+heart_disease$num <- NULL
+print(heart_disease)
+```
+7. (5 pts) Explore the relationship between “diagnosis” variable you created above and all other 13
+attributes in the dataset. Which variables are associated with “diagnosis” use appropriate plots and
+statistical tests to answer this question. Interpret the result of each test. (Note to get full credit for this
+question, you should use both an appropriate plot and an appropriate statistics test to examine the
+relationship between each of these variables and diagnosis. You should also interpret each plot and test statistics.
+
+
+Ans: 
+```{r}
+# Finding the relationship of "diagnosis" variable with firstly the numeric variables:
+# We'll use box plots
+# The numeric variables are: age, trestbps, chol, thalach, oldpeak, ca
+
+boxplot(heart_disease$age ~ heart_disease$diagnosis, xlab = "Diagnosis", ylab = "Age")
+boxplot(heart_disease$trestbps ~ heart_disease$diagnosis, xlab = "Diagnosis", ylab = "Trestbps")
+boxplot(heart_disease$chol ~ heart_disease$diagnosis, xlab = "Diagnosis", ylab = "Chol")
+boxplot(heart_disease$thalach ~ heart_disease$diagnosis, xlab = "Diagnosis", ylab = "Thalach")
+boxplot(heart_disease$oldpeak~ heart_disease$diagnosis, xlab = "Diagnosis", ylab = "Oldpeak")
+boxplot(heart_disease$ca ~ heart_disease$diagnosis, xlab = "Diagnosis", ylab = "Ca")
+
+```
+```{r}
+# Performing a t-test now for the continuous variables onlywhich are: trestbps, chol, thalach, oldpeak
+
+trestbps_t_test <- t.test(trestbps ~ diagnosis, data = heart_disease)
+chol_t_test <- t.test(chol~ diagnosis, data = heart_disease)
+thalach_t_test <- t.test(thalach ~ diagnosis, data = heart_disease)
+oldpeak_t_test <- t.test(oldpeak ~ diagnosis, data = heart_disease)
+
+print(trestbps_t_test)
+print(chol_t_test)
+print(thalach_t_test)
+print(oldpeak_t_test)
+
+```
+
+
+# All the p-values for all attributes are coming to be less that 0.05, thus, we'll reject the null hypothesis and follow our alternate hypothesis that they are associated with the diagnosis variable.
+```{r}
+# We'll perform Kruskal-Wallis test for ordinal numerical values: restcg, slope, thal
+restecg_kt <- kruskal.test(restecg ~ diagnosis, data = heart_disease)
+slope_kt <- kruskal.test(slope ~ diagnosis, data = heart_disease)
+thal_kt <- kruskal.test(thal ~ diagnosis, data = heart_disease)
+print(restecg_kt)
+print(slope_kt)
+print(thal_kt)
+```
+Again, the p-values are less than 0.05. Therefore, we'll reject our null hypothesis and can say that their is an association.
+
+
+```{r}
+# Now, we'll use mosaic plots and chi-sqaure test for the categorical values
+# The categorical values are: sex, cp, fbs, restcg, exang, slope, thal
+# Constructing mosaic plots
+mosaicplot(table(heart_disease$sex, heart_disease$diagnosis), main = "Mosaic Plot", color = c("lightblue", "pink"))
+mosaicplot(table(heart_disease$cp, heart_disease$diagnosis), main = "Mosaic Plot", color = c("lightblue", "pink"))
+mosaicplot(table(heart_disease$fbs, heart_disease$diagnosis), main = "Mosaic Plot", color = c("lightblue", "pink"))
+mosaicplot(table(heart_disease$restecg, heart_disease$diagnosis), main = "Mosaic Plot", color = c("lightblue", "pink"))
+mosaicplot(table(heart_disease$exang, heart_disease$diagnosis), main = "Mosaic Plot", color = c("lightblue", "pink"))
+mosaicplot(table(heart_disease$slope, heart_disease$diagnosis), main = "Mosaic Plot", color = c("lightblue", "pink"))
+mosaicplot(table(heart_disease$thal, heart_disease$diagnosis), main = "Mosaic Plot", color = c("lightblue", "pink"))
+
+```
+
+
+```{r}
+# Now, we'll use chi-square test
+sex_chisq <- chisq.test(table(heart_disease$sex, heart_disease$diagnosis))
+cp_chisq <- chisq.test(table(heart_disease$cp, heart_disease$diagnosis))
+fbs_chisq <- chisq.test(table(heart_disease$fbs, heart_disease$diagnosis))
+restecg_chisq <- chisq.test(table(heart_disease$restecg, heart_disease$diagnosis))
+exang_chisq <- chisq.test(table(heart_disease$exang, heart_disease$diagnosis))
+slope_chisq <- chisq.test(table(heart_disease$slope, heart_disease$diagnosis))
+thal_chisq <- chisq.test(table(heart_disease$thal, heart_disease$diagnosis))
+print(sex_chisq)
+print(cp_chisq)
+print(fbs_chisq)
+print(restecg_chisq)
+print(exang_chisq)
+print(slope_chisq)
+print(thal_chisq )
+```
+
+
+According to the p-values coming, We can deduce that we should accept the alternate hypothesis.
+
+
+
+
+
+
+
+
+
+
+
+
